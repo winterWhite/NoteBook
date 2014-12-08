@@ -99,3 +99,96 @@ Ext.define()遵守单根继承，但通过mixins属性可以在不破坏单根�
 	该类定义了一系列与事件处理相关的函数，如onDocumentReady、onWindowResize、onTextResize。其中最常用的onDocumentReady，也就是常用的方法Ext.onReady
 
 ## 第三课：表格控件
+
+表格由类Ext.grid.GridPanel定义，该类继承自Ext.Panel，其xtype为grid；在Ext中表格必须包含列定义信息，并指定表格的数据储存器。表格的列信息由数组columns定义，而表格的数据储存器由Ext.data.Store定义 
+
+###创建表格的过程：
+
+* 创建表格的列模型：一个JSON数组，每一个JSON对象说明某一列的名称、类型等信息。这个JSON数组赋值给columns配置属性，一个JSON对象包含的信息有首部显示文本(header)、列对应记录集字段(dataIndex)、列是否可排序(sortable)、列的渲染函数(renderer)、宽度(width)、格式化信息(format)等等
+* 添加数据：二维格式的数组添加形式，将数组赋值给data数组。
+* 转化原始数据：使用Ext.data.ArrayStore类创建一个数据存储对象，赋值给store属性，它负责把各种原始数据(二维数组、JSON对象数组、XML文本)转化为Ext.data.Record类型的对象。store对应两个部分：proxy(获取数据的方式)、reader(解析数据的方式)。Ext.data.ArrayStore方法默认通过内存加载JSON数据作为元数据。同时最后必须执行一次store.load()来初始化数据。
+	
+		var store = new Ext.data.ArrayStore({
+			data: data,
+			fields: [
+				{name: 'id', mapping: 0},
+				{name: 'name', mapping: 1},
+				...
+			]
+		});
+注意上面代码中的mapping属性，此属性用于控制列的位置，注意mapping索引从0开始。
+* 将列模型和转化后的数据装配在一起，使用Ext.grid.GridPanel初始化：
+		
+		var grid = new Ext.grid.GridPanel({
+			renderTo: 'grid',
+			store: store,
+			columns: columns
+		});
+
+	其中renderTo属性指定Ext表格渲染的父容器即一个div的id，store和columns分别指定列模型对象和转换的数据对象。
+
+###常用功能详解
+
+* 常用属性功能
+
+	* enableColumnMove属性：用于指定表格列是否可拖动，默认为True，可在初始化表格的时候设置为False。
+	* enableColumnResize属性：用于指定表格列宽是否可变，默认为True，可在初始化时设置为False
+	* stripeRows属性：用于指定表格以斑马线效果，默认为False
+	* loadMask属性：指定数据加载时的遮罩和提示功能，默认为False
+* 宽度自定：每一列的宽度可分别指定，直接在创建列模型时的JSON数组中的每个JSON对象加上width属性指定宽度，同时在初始化表格时添加forceFit：true属性即可。此时会根据指定的width显示列宽，未制定的默认100px宽。
+* 支持列排序：列模型添加sortable属性即可
+* 中文排序：可通过sorters属性为Ext.data.ArrayStore设置默认的排序方式
+		
+		var store = new Ext.data.ArrayStore({
+			data: data,
+			fields: [...],
+			sorters: [{property: "name", direction: "ASC"}]
+		});
+	注意上诉使用的sorters属性，是对应的JSON数组，每个JSON对象指定一个列的默认排序方式，其中“ASC”表示升序，“DESC”表示降序。而要实现中文的排序则需要重写Ext.data.ArrayStore的createComparator方法
+* 显示日期类型数据：在转化数据时，对应日期的JSON对象添加属性type：'date'以及dataFormat: 'Y-m-dTH:i:s'分别制定数据类型为日期，以及日期的显示格式；同时还需要在列模型的日期对应的列JSON对象添加render属性并指定Ext.util.Format.dateRender('Y-m-d')
+
+###表格渲染
+
+为使得表格变得更加丰富，Ext提供了许多扩充功能。可以为列添加渲染函数，渲染函数通过renderer属性指定，通过复杂的判定函数可以更加丰富地渲染表格。
+
+###行号与复选框
+
+* 行号
+
+		var columns = [
+			new Ext.grid.RowNumber(),
+			{}...
+		];
+只需要在所有列之前加上一个用于计算行号的Ext.grid.RowNumber对象即可。
+* 复选框：首先创建一个Ext.selection.CheckboxModel对象并赋值给表格初始化对象的selModel属性，即可添加一列复选框
+
+###选择模型
+
+选择模型有RowModel模型——行选择；CellModel模型——单元格选择
+
+###表格视图Ext.grid.GridView
+
+当生成表格对象的时候会默认生成对应的GridView对象，使用Ext.grid.GridPanel对象的getView方法可获取当前表格的视图并进行操作，通过此对象可以重新定义整个表格的高宽、数据、以及viewConfig对象
+
+viewConfig对象的常用属性：
+
+* columnsText、sortAscText、sortDescText分别设置表格中每列下拉菜单中的显示的列，升序、降序部分的显示文字
+* scrollOffset表示为滚动条预留的宽度，默认20px
+* forceFit参数为true时，表格为自动延展每列的长度使内容填满单元格
+
+###表格分页
+
+* 添加分页工具条
+		
+		var grid = new Ext.grid.GridPanel({
+			...
+			bbar: new Ext.PagingToolbar({
+				pageSize: 10,//每页显示的数据条数
+				store: store,
+				displayInfo: true,//是否显示数据信息
+				displayMsg: '',//当displayInfo为true时才有用
+				emptyMsg: ''//没有数据时的显示信息
+			})
+		});
+在初始化表格的时候添加一项bbar属性，工具条属性
+* 分页工具与后台的交互
