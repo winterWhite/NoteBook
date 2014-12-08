@@ -116,6 +116,7 @@ Ext.define()遵守单根继承，但通过mixins属性可以在不破坏单根�
 				...
 			]
 		});
+可以指定proxy属性作为获取数据的地址，而不是从内存获取。
 注意上面代码中的mapping属性，此属性用于控制列的位置，注意mapping索引从0开始。
 * 将列模型和转化后的数据装配在一起，使用Ext.grid.GridPanel初始化：
 		
@@ -192,3 +193,91 @@ viewConfig对象的常用属性：
 		});
 在初始化表格的时候添加一项bbar属性，工具条属性
 * 分页工具与后台的交互
+
+	此时通过ajax从后台获取数据而不是直接从内存中读取，因此需要修改proxy属性
+
+		proxy：{
+			type: 'ajax',
+			url: '后台获取数据的地址'
+		}
+	因为获取的数据类型为JSON，所以对reader也要做出相应的修改
+
+		reader: {
+			type: 'json',
+			totalProperty: 'totalProperty',
+			root: 'root',
+			idProperty: 'id'
+		}
+	此处指定了type为JSON，同时增加了totalProperty和root属性，这两个属性对应后台返回的数据名称。最后，在初始化时传递对应的分页参数：
+
+		store.load({params: {start: 0, limit: 10}});
+	传递的参数是后台程序规定的。
+
+* 底部的分页工具条
+
+	前面提到的分页工具条bbar位于表格的底部，同样有一种tbar工具条是位于表格顶部的。
+
+* 前台分页
+
+	即一次性从后台获取所有数据，并有前台判定显示数目，Extjs没有直接提供这样的功能，但通过PagingMemoryProxy.js扩展可以实现从内存分页。调用方法：
+
+		Ext.Loader.setPath('Ext.ux', '相对路径');
+		Ext.require('Ext.ux.data.PagingMemoryProxy');
+	同时将proxy的type修改为pagingmemory；初始化时传入start和limit参数即可。也可在前台生成javascript数组或者使用ajax读取后台数据，再传递给pagingmemoryproxy也可实现内存分页。
+
+###后台排序
+
+前台的排序只能对当前页的数据进行排序，如果要对所有数据进行排序，则需要将排序信息提交到后台，由后台将排序信息组装到SQL中，再有处理好的数据返回给前台。
+
+要实现后台排序，首先要将store对象中的remoteSort属性设置为true，这个属性指定是否允许远程排序。将这个属性设置为true后，在下次请求排序时则会向后台提交sort和dir两个参数，其中sort表示需要排序的字段，dir表示升序或降序，后台根据这些参数对数据进行处理。
+
+###多重排序
+
+可以对多列同时指定排序规则：
+
+	store.sort([{
+		property: 'rating',
+		direction: 'DESC'
+	}, {
+		property: 'salary',
+		direction: 'ASC'
+	}]);
+以上代码就指定了rating列和salary列的排序规则。
+
+###可编辑表格控件——EditorGrid
+
+首先在列模型定义时，给每一列都添加一个editor属性并指定allowBlank：false(表示允许为空)，在初始化时启用CellEditing插件：
+
+	var grid = new Ext.grid.GridPanel({
+		selType: 'cellmodel',
+		plugin: [
+			Ext.create('Ext.grid.plugin.CellEditing', {
+				clicksToEdit: 1//表示只需要点击以下就可以编辑，默认需要双击
+			})
+		]
+	});
+
+* 添加删除行
+
+
+* 保存修改结果
+
+
+* 限制输入数据类型
+
+
+###属性表格控件——PropertyGrid
+
+
+
+###分组表格控件——GroupingGrid
+
+
+###表格拖放
+
+
+###表格右键菜单
+
+
+
+###其他扩展插件
