@@ -259,25 +259,175 @@ viewConfig对象的常用属性：
 
 * 添加删除行
 
+通过给tbar或者bbar添加两个按钮，并给按钮加上handler方法，如下
 
+	tbar: ['-', {
+		text: '添加',
+		handler: function(){
+			var p = {
+				id: '',
+				name: '',
+				descn: ''
+			};
+			//grid.stopEditing();
+			store.insert(0, p);
+			//grid.startEditing();
+		}
+	}, '-', {
+		text: '删除',
+		handler: function() {
+			Ext.Msg.confirm('信息', '确定要删除?', function(btn) {
+				if(btn == 'yes'){
+					var sm = grid.getSelectionModel();
+					var record = sm.getSelection()[0];
+					store.remove(record);
+				}
+			});
+		}
+	}, '-']
 * 保存修改结果
 
-
+同样通过给工具条添加一个保存按钮，并附上操作函数，通过store.getModifiedRecords()方法获取修改过的数据并放到JSON数组里，然后使用Ajax提交给后台。会使用到一些数组操作的方法，比如Slice和each方法
 * 限制输入数据类型
 
+Ext提供了许多的数据类型组件：
 
+* NumberField限制只能输入数字   
+* ComboBox限制只能输入备选项   
+* DateField限制只能输入日期   
+* Checkbox限制从true和false中选择其一
+
+需要在定义列模型的时候给对应的列添加对应的editor属性如下：
+
+	var columns = [{
+		header: '数字列',
+		dataIndex: 'number',
+		editor: new Ext.form.NumberField({
+			allowBlank: false,
+			allowNegative: false,
+			maxValue: 10
+		})
+	}...];
+以上的内容定义了一个数字列，且规定了改列不能为空或者为负，且最大值为10；而对于不同的限制输入对象有不同的配置内容，如ComboBox就需要配置备选项，日期可以配置disableDay即不可选日期
 ###属性表格控件——PropertyGrid
 
+PropertyGrid扩展自EditGrid，创建方式：
 
+	var grid = new Ext.grid.PropertyGrid();
+此控件提供更多高级的表格功能，此处不详细说。
 
 ###分组表格控件——GroupingGrid
 
+此控件在普通表格的基础上，根据某一列的数据显示表格中的数据分组。只需要在建立数据转换时添加groupField属性，指定分组根据那一列的数据进行。如下:
+
+	var store = new Ext.data.ArrayStore({
+		fields:[...],
+		data: data,
+		groupField: 'sex',
+		sorter: ...
+	});
+同时在表格初始化的时候将features设置为grouping，如下：
+
+	var grid = new Ext.grid.GridPanel({
+		...
+		features: [{ftype: 'grouping'}]
+	});
+
+分组表格视图
+
+通过grid.view.features[0]可以获取分组表格feature的实例并对其进行操作，如expandAll方法展开所有分组，collapseAll方法折叠所有分组，isExpanded方法判断分组是否展开，也有单独的collapse和expand方法，通过调用getGroupId方法获取对应ID之后就可以对该分组进行折叠或展开操作。
 
 ###表格拖放
 
+* 拖放改变表格大小
+
+	使用Resizable对象，其参数有
+	
+	* 表格的父容器ID
+	* wrap：true
+	* minHeight
+	* pinned：true
+	* handles：拖动方向s/e/w/n
+
+	定义了rz对象后还必须注册事件，如下：
+
+		var rz = new Ext.Resizable(grid.getEl(), {
+			wrap: true,
+			minHeight: 100,
+			pinned: true,
+			handles: 's'
+		});
+		rz.on('resize', function(resizer, width, height, event) {
+			grid.setHeight(height);
+		}, grid);
+* 表格内部拖放：用于排序
+
+	设置gridviewdragdrop插件即可：
+
+		var grid = new Ext.grid.GridPanel({
+			...
+			viewConfig: {
+				plugins: {
+					ptype: 'gridviewdragdrop'
+				}
+			}
+		});
+* 表格之间的拖放：两个表格都设置gridviewdragdrop插件即可
 
 ###表格右键菜单
 
+使用右键事件：itemcontextmenu
 
-
+	var contextmenu = new Ext.menu.Menu({
+		id: '',
+		items: [
+			text: '',
+			handler: function() {}
+		]
+	});//定义菜单组件
+	grid.on('itemcontextmenu', function(view, record, item, index, e) {
+		e.preventDefault();//阻止默认右键事件
+		contextmenu.showAt(e.getXY());
+	});//注册右键事件
+	
 ###其他扩展插件
+
+* 行编辑器
+* 进度条分页组件
+* 缓冲表格视图
+* 分组表头
+* 锁定列
+* 树形表格
+* 表格过滤组件   
+**...**
+
+## 第四课：表单与输入控件
+
+###表单的创建
+
+
+###表单的输入控件
+
+
+###ComboBox
+
+
+###复选框与单选按钮
+
+
+
+###滑动条控件
+
+
+
+###表单布局
+
+
+###数据校验
+
+
+###数据提交
+
+
+
+###自动填充数据控件
