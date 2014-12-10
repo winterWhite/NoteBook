@@ -405,15 +405,149 @@ PropertyGrid扩展自EditGrid，创建方式：
 
 ###表单的创建
 
+	var form = new Ext.form.FormPanel({
+		title: '',
+		defaultType: 'textfield',
+		buttonAlign: 'center',
+		frame: true,
+		width:,
+		fieldDefaults: {
+			labelAlign: 'right',
+			labelWidth:70
+		},
+		items: [{
+			fieldLabel: '文本框',
+		}],
+		buttons: [{
+			text: '按钮'
+		}]
+	});
+	form.render("form");
+以上的items用于指定文本框等控件、buttons用于指定按钮等控件
+对应的HTML中要有对应的表单容器，<div id="from"></div>。通过创建Ext.form.FormPanel对象并设置里面的field内容我们创建了一个表单。FormPanel继承自Ext.Panel，可以执行一些Panel的操作，而表单的功能是在Ext.form.BasicForm中实现的，通过FormPanel的getForm方法可以获取BasicForm对象，并实行一些表单的操作。
 
 ###表单的输入控件
 
+Ext提供的输入控件包括：TextField、TextArea、Checkbox、Radio、ComboBox、DateField、HtmlEditor、Hidden和TimeField
+
+* 基本输入控件
+
+	Ext.form.Field是所有表单输入控件的基类，它定义了输入控件通用的属性和功能方法，大致可以分为页面显示样式、空间参数配置、数据有效性检验三种：
+
+	* 页面显示样式：clearCls、cls、fieldClass、focusClass、itemClass、invalidClass、labelStyle等属性，分别用于定义不同状态下输入框的样式
+	* 控件参数配置：autoCreate、disabled、fieldLabel、hideLabel、inputType、labelSeparator、name、readOnly、tabIndex、value等属性，用于设置输入控件生成的DOM内容和标签内容，以及禁用和只读等属性配置
+	* 数据有效性校验：invalidText、msgFx、msgTarget、validateOnBlur、validateDelay、validateEvent等属性，用于设置数据校验的方式以及如何显示错误信息。
+
+* 文本输入控件 Ext.form.TextField
+
+	文本输入控件提供特色功能：检验输入是否为空，限制输入内容的最大最小长度，运用到allowBlank、maxLength、minLength这三个属性。
+
+	把创建好的Ext.form.TextField对象放到表单的items属性中即把此文本框放入了表单。
+
+* 多行文本输入框 Ext.form.TextArea
+
+	此控件使用户能一次输入多行文本，对grow属性设置为true使文本框可根据输入的内容自动修改自身的高度，preventScrollbars用于防止出现滚动条。
+* 日期输入控件 Ext.form.DateField
+
+	此控件会弹出日历供用户选择日期，format属性用于设置日期的显示格式，而disabledDays可以禁止用户选择一周内的特定日期。
+* 时间输入控件 Ext.form.TimeField
+
+	此控件通过制定一天中的始终时间以及时间间隔的方式来为用户提供可供选择的时间点，其中minValue、maxValue分别指示起始时间和终止时间，increment指定时间间隔，时间间隔以分钟为单位。
+* 在线编辑器控件(富文本) Ext.form.HtmlEditor
+
+	在此控件中对对应功能的enable选项进行设置。
+* 隐藏域 Ext.form.Hidden
+
+	通过设置setValue和getValue方法对其进行赋值和取值的操作，但它不会显示在页面上。
+* 如何设置input的type
+
+	通过对Ext.form.TextField的inputType修改即可，比较特殊的type=image的输入框，需要修改autoCreate参数，如下：
+	
+		{
+			fieldLable: '证件照',
+			name: 'smallimg',
+			inputType: 'image',
+			inputAttrTpl: [
+				'src="URL"'
+			],
+			width:,
+			height:
+		}
 
 ###ComboBox
 
+Ext中的ComboBox完全是由Div重写的，如何创建一个ComboBox：
+
+* 使用二维数组data定义ComboBox中将要显示的数据
+* 将定义好的数据交给Ext.data.ArrayStore，Ext.data.ArrayStore与Ext.data.Store功能相似，但前者不需要定义proxy和reader就可以直接使用，更方便
+* 将ComboBox画到页面上，对应的HTML内容是<input id="combo" type="text"/>
+
+对象Ext.form.ComboBox对象设置的参数：
+
+* store：ComboBox提供的数据，原始数据是二维数据
+* emptyText：当没有选择任何数据时ComboBox里面的显示数据
+* mode：当设置为local时表示ComboBox的数据已经读取到本地，不需要后台读取
+* triggerAction：当设置为all时，如果用默认的query会使用autocomplete功能
+* value：设置默认值
+
+**将Select转换成ComboBox**
+
+架设有一个Select元素的id为combo，将其转化为ComboBox，使用该Select的数据：
+
+	var combo = new Ext.form.ComboBox({
+		emptyText: '',
+		mode: 'local',
+		triggerAction: 'all',
+		transform: 'combo'  //使用select元素的数据
+	});
+
+**ComboBox读取远程数据**
+
+使用Ext.data.Store对象配合proxy和fields获得后台返回的数据：
+
+	var store = new Ext.data.Store({
+		proxy: {
+			type: 'ajax',
+			url: URL,
+			reader: {
+				type: 'array'
+			}
+		},
+		fields: [
+			{name: 'value'},
+			{name: 'text'}
+		]
+	});
+然后将ComboBox的mode参数设置为remote。
+
+还有一种方法是使用store.load()，这种方法可以决定何时加载数据。注意两种方式如果同时使用就会加载两次数据。
+
+**ComboBox高级配置**
+
+* 为ComboBox添加分页功能
+
+	需要两个参数：pageSize决定每次显示多少条记录； minListWidth控制下拉列表的宽度，如果不设置则看不到完整的分页条；mode的值必须是remote
+* 是否允许用户子弟填写内容
+
+	将editable设置为true则表示可以自行填写。
+
+**监听用户选择的数据**
+
+	combo.on('select', function(comboBox) {
+		...
+	});
+然后通过comboBox的getValue和getRawValue方法可获取用户选定的具体信息
+
+**省市县级联的实现**
+
+此功能的关键点在于on事件的监听，当上一级选定之后，其后一级的数据内容会发生响应的变化。
+
+**MultiSelect以及ItemSelector扩展**
+
+这两个扩展都需要在HTML页面引入相应的js文件才能使用。
+
 
 ###复选框与单选按钮
-
 
 
 ###滑动条控件
