@@ -549,19 +549,80 @@ Ext中的ComboBox完全是由Div重写的，如何创建一个ComboBox：
 
 ###复选框与单选按钮
 
+通过在items配置中设置defaultType值为checkbox或者radio即可设置
+####复选框
 
+复选框对应Ext.form.Checkbox，但无法控制其样式。复选框和单选按钮独有的属性boxLabel用于显示在其右边的说明性文字，与labelField的区别只是位置不同，为避免出现两个标签，应当把hideLabels设置为true以保证左侧的标签不会显示出来。通过inputValue来指定checkbox的实际值，使用checked：true可默认选中某一个框
+####单选按钮
+
+Ext中的单选按钮继承自复选框，因此checkbox具有的所有功能Radio都有，只是在制作单选按钮时要确定一次只能选择一个，而要进行一些有别于checkbox的配置。一组Radio的name值都是一样的，因此inputValue的值则尤为重要，用于判断用户的选择。同时Radio有一个自己独有的函数getGroupValue，用于获得某个分组中被选中的Radio的值。
+####CheckboxGroup和RadioGroup控件
+
+这两个控件可用于对复选框和单选按钮进行各种各样的排列。
+
+* 横向排列
+
+	这两个控件的默认排列方式就是横向排列，使用时，只需要在配置xtype：‘checkboxgroup’即可。
+* 竖向排列
+
+	只需要在上面的设置基础上再加上columns:1，即可
+* 多排列
+
+	即既有横向排列又有竖向排列：只需要设置colunms的值即可，这个值表示没一横排有多少项，然后会子哦对那个进行排列
+* 自定义多列排列方式
+
+	这种情况对colunms配置一个两项的数组，分别定义了高和宽，也可以用百分比表示
+* 自定义布局排列方式
+
+	可以向items传入一个对象数组，每一个对象用于配置一种选择按钮集合，在每一个按钮集合中设置columnWidth来确定每个选择按钮集区域的宽度即可实现按钮的分区显示。
 ###滑动条控件
 
-
+实现滑动条控件需要额外引入文件SlideField.js，引入之后其使用方法与其他控件一样，只需要将配置中的defaultType设置为sliderField即可。可以通过给控件的value值传入一个数组就可以指定多个滑动条，让用户可以一次指定多个值。
 
 ###表单布局
 
+表单的默认布局是自上而下的平铺式布局，默认标签左对齐，按钮右对齐，可通过设置labelAlign和buttonAlign进行改变，还可以通过labelWidth强制定义标签宽度。
 
+####平行分布布局
+
+通过指定layout:'column'来说明下面要使用列布局，然后在items指定的每列中使用columnWidth指定每列所占宽度的百分比，此时就不能在表单中直接使用defaultType指定默认的xtype了，否则会影响布局结果。同时在每一列中的items也必须设定layout为form，如此才能在每列中正常显示输入框和对应标签。
+
+PS：layout的form表示表单的默认布局方式，及自上而下的布局方式
+
+####fieldset
+
+* 布局中使用fieldset
+
+	使用fieldset进行内部分组，在items设置的每一项中指定xtype为fieldset即可，可以加上title指定分组的名称。
+* fieldset中使用布局
+
+	
+####自定义布局
+
+使用xtype：panel来使用panel的其他功能装饰表单。
 ###数据校验
 
+在文本框的的不能为空校验，只需要设置allowBlank：false即可   
+文本框中关于输入长度的校验，只需要设置maxlength和minlength的值即可
 
+Ext提供了一套默认的校验方式vtype，vtype可以指定为email则可以校验用户输入的是否是一个邮箱地址
+
+自定义校验规则：即允许自定义正则表达式，可以传入regex的正则表达式用于检验，regexText用于提示即可。
+
+NumberField：此对象有自身一套特有的校验方式
+
+使用后台返回的校验信息：
 ###数据提交
 
+默认提交：通过设置url属性指定一个提交地址
 
+HTML原始提交：
+
+单纯Ajax：
+
+文件上传：
 
 ###自动填充数据控件
+
+
+## 第五课：树形结构
