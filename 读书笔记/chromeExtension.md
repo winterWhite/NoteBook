@@ -301,4 +301,42 @@ content_scripts字段是一个对象数组，每一个对象都可以包含下�
 * include_globs——可选，字符串数组，
 * exclude_globs——可选，字符串数组
 
-当某个页面的URL与matches字段的内容匹配，则会被插入content script
+当一个页面的URL与matches或者 include_ globs 的表达式匹配，或者与exclude_ matches、exclude_globs不匹配，则该网页就会被植入content script。其中matches用来圈定插入content script的大范围，而其他三个字段用于限制一些小的条件。
+
+要向网页插入js、css等代码，需要获取cross-origin权限，同时还需要获取chrome.tabs
+的权限。通过tabs.executeScript和tabs.insertCSS向网页插入js或者css文件。
+
+content script运行在一个特殊的隔离环境，它可以访问所插入网页的DOM结构，却不可以访问该网页的js变量或方法，与此同时，网页也不可以访问content script的变量或方法。这样的设置使得content script与web网页之间不会发生冲突。
+
+虽然content script与其被插入的网页之间的运行环境是相互隔离的，但他们共享一个DOM结构，如果content script想要与网页进行沟通，则必须通过DOM，使用postMessage方法发送信息，对message事件进行监听，这两者即可进行交流了。如下：
+
+	contentscript：
+		var port = chrome.runtime.connect();
+
+		window.addEventListener("message", function(event) {
+		  // We only accept messages from ourselves
+			  if (event.source != window)
+		    return;
+
+		  if (event.data.type && (event.data.type == "FROM_PAGE")) {
+			    console.log("Content script received: " + event.data.text);
+			    port.postMessage(event.data.text);
+		  }
+		}, false);
+
+	web page：
+		document.getElementById("theButton").addEventListener("click",
+   		 function() {
+  			window.postMessage({ type: "FROM_PAGE", text: "Hello from the webpage!" }, "*");
+		}, false);
+
+安全问题：
+
+* 第一点：
+* 第二点：
+
+插件文件的引用：使用chrome.extension.getURL("")即可获取文件地址，使用是和其他的URL使用方法一样。
+
+## Match Patterns
+
+此部分用于说明content scripts配置的matches字段。

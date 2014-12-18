@@ -626,3 +626,200 @@ HTML原始提交：
 
 
 ## 第五课：树形结构
+
+###创建树
+
+树控件由Ext.tree.TreePanel定义，控件的名称为TreePanel：
+
+	var tree = new Ext.tree.TreePanel();
+	tree.render('treeId');
+	//此处的treeId泛指的是树形结构的容器ID，也就是说在HTML中应当有对应的div其ID值为treeId
+以上的代码创建了一个树形面板，然后开始创建树之前先要定义树的根：
+
+	store: new Ext.data.TreeStore({
+		root: {
+			text: '',
+			leaf: true
+		}
+	});
+通过store参数将root放到树形里，然后对树形进行渲染，使其出现在容器treeId的位置，然后就可以开始添加枝叶了：
+
+	root: {
+		text: '',
+		children: [{
+			text: '',
+			children:[]
+		},{
+			text: '',
+			children: []
+		}, {
+			text: '',
+			leaf: true
+		}]
+	}
+枝叶的添加格式如上，是一个循环的过程，如果有叶子则添加children字段，没有则设置leaf为true。但树枝默认是收起的，也就是需要点击图标前面的加号才能展开树看到叶子，通过设置Tree.getRootNode().expand(true, true)则可以设置树为展开状态。expand方法的第一个参数指定是否要递归地展开所有的子节点，第二个参数指定是否要动画展开。
+
+###配置树
+
+可以将render直接放到tree创建的配置信息中进行指定：
+
+	var tree = new Ext.tree.TreePanel({
+		store: new Ext.data.TreeStore(...),
+		renderTo: 'treeId'
+	});
+
+###TreeStore
+
+前端直接写数据是非常麻烦的，通过TreeStore可以从后台获取数据并组装成树，配置如下：
+
+	var tree = new Ext.tree.TreePanel({
+		store: new Ext.data.TreeStore({
+			proxy: {
+				type: 'ajax',
+				url: ...
+			},
+			root: {
+				text: ''
+			}
+		}),
+		renderTo: ''
+	});
+以上代码中store字段中使用了proxy字段对后台URL进行了配置，但是在后台的数据一定要保证所有的叶子节点都要有leaf:true，否则ajax就会一直不停地请求下去。
+
+除此之外，还可以通过JSP提供后台数据，或者通过XML加载树形结构。
+
+###树事件
+
+Ext的树事件提供非常丰富的有关树变化或动作的信息，注册监听如下：
+
+	tree.on("itemexpand", function(node) {...});//监听但节点被展开时的信息
+	tree.on("itemcollapse", function(node) {...});//监听当节点被收起时的信息
+	tree.on("itemclick", function(node) {...});//监听当节点被点击时的信息
+右键菜单事件，需要注册一个contextmenu的事件如下：
+
+	var contextmenu = new Ext.menu.Menu({
+		id: 'theContextMenu',
+		items: [{
+			text: '',
+			handler：function() {...}
+		}]
+	});
+注册之后再进行绑定，如下：
+
+	tree.on("itemcontextmenu", function(viex, record, item, index, e) {
+		e.preventDefault();
+		...
+	});
+
+###其他设置
+
+**修改节点默认图标**
+
+设置每个树形节点的icon和iconCls属性，这两个属性负责制定节点的图标：
+
+	{
+		text: '',
+		icon: '图片URL',
+		...
+	}//这是通过icon属性改变图标
+	{
+		text: '',
+		iconCls: 'css类名',
+		...
+	}//这是通过iconCls属性改变图标，此时HTML中应该有对应的类：
+	.x-tree-icon-leaf .css类名 {
+		background-image: URL
+	}//注意此处的类必须是层叠的写法，否则无效
+
+**节点弹出对话框**
+
+	tree.on("itemclick", function(view, record, item) {
+		Ext.Msg.show({
+			title: '',
+			msg: '',
+			animateTarget: item
+		});
+	});
+
+**节点提示信息**
+
+当鼠标悬浮在节点上方时显示提示信息，这种效果通过设置节点的qtip属性即可。同时还要通过Ext.QuickTips.init()方法对此功能初始化，且这行代码必须在onReady函数的第一行。
+
+**为节点设置超链接**
+
+只需要给节点加上href属性并附上URL即可，类似于超链接的Target属性，叶子节点也有一个对应的hrefTarget属性。
+
+###树形拖放
+
+开启treeviewdragdrop插件即可实现叶子与枝杈、根之间的拖放，但叶子不能拖放到叶子之下：
+
+	var tree = new Ext.tree.TreePanel({
+		viewConfig: {
+			plugins: { ptype: 'treeviewdragdrop' }
+		},
+		...
+	});
+
+节点（拖之后）放的三种形式：
+
+* append：放下去的节点变成目标节点的子节点，形成父子关系
+* above：放下去的节点变成目标节点的兄弟，放下去的节点排行在前
+* below：放下去的节点变成目标结点后面的兄弟
+
+PS：叶子节点不能append，但通过nodedragover事件可以将叶子节点的leaf设置为false，则可以打破这个规律了。
+
+判断拖放目标：
+
+通过nodedrop事件，此事件是拖放的节点放下去时触发的：
+
+	tree.view.on("drop", function(node, overModel, dropPosition, dropHandler) {
+		...
+	});
+以上代码中，node即正在拖放的节点，overModel为放下去碰到的节点，dropPosition是放下去的方式（上面介绍的三种之一），通过这些数据可以判定当前节点的状态位置，以通过Ajax发送给后台以更新数据。才用request方法：
+
+	Ext.Ajax.request({
+		method: 'POST',
+		url: ,
+		success: function() {...},
+		failure: function() {...},
+		params: {
+			data: encodeURIComponent(Ext.encode({
+				dropNode: node.id,
+				target: overModel.get('id'),
+				point: dropPosition
+			}))
+		}
+	});
+
+树之间的拖放：
+
+树与树之间的拖放，不一定drag和drop同时存在，因此使用enableDD：true也可以单独设置enableDrag或enableDrop
+
+###其他功能
+
+* 树排序
+
+	通过在store中设置folderSort参数即可实现树排序
+* Checkbox树
+
+	为数节点添加checked：true属性即可
+* 表格与树的结合
+
+	treecolumn插件可实现表格与树结合的效果
+* 选中节点
+
+	使用selectPath函数，传入叶子相对于根的路径即可；使用selectionModel选择，通过treePanel.getSelectionModel方法可获得属性的选择模型
+* 刷新
+
+	使用根节点的reload函数
+* 缓冲视图
+
+		plugins: [{
+			ptype: 'bufferedrenderer'
+		}]
+* 锁定功能
+
+	grid的锁定功能，哎某一列使用locked：true即可
+
+## 第六课：布局
+
