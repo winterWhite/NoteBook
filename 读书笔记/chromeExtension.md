@@ -339,4 +339,23 @@ content script运行在一个特殊的隔离环境，它可以访问所插入网
 
 ## Match Patterns
 
-此部分用于说明content scripts配置的matches字段。
+此部分用于说明content scripts配置的matches字段。 
+
+match patterns是一个可能包含有* 符号的URL，比较特殊的all-urls表示匹配所有的URL，一般用*表示。
+
+使用语法：
+
+	< url-pattern> := < scheme>://< host>< path>
+	< scheme> := '*' | 'http' | 'https' | 'file' | 'ftp'
+	< host> := '*' | '*.' <any char except '/' and '*'>+
+	< path> := '/' <any chars>
+*在不同的位置表示不同的含义，比如说在协议部分表示一切协议，而在主机名部分表示任何主机名，或者某个部分匹配任意的字符串，在路径部分也一样。
+
+# Permission
+
+如果要使用chrome提供的大部分API，就必须在配置文件manifest中的permission字段声明。permission字段是一个字符串列表，这些字符串是预先定义好的，或者是match patternz匹配的URL网页。
+
+权限列表： [https://developer.chrome.com/extensions/declare_permissions](https://developer.chrome.com/extensions/declare_permissions)
+
+-------------------------------------------------------------
+

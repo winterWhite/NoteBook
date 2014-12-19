@@ -823,3 +823,62 @@ PS：叶子节点不能append，但通过nodedragover事件可以将叶子节点
 
 ## 第六课：布局
 
+Ext中的所有布局都是从Ext.Container，Ext.Container的父类Ext.BoxComponent是一个盒子组件可以定义宽高、位置等属性，而作为子类的Ext.Container除继承了这些功能外还可以通过layout和items属性对内部进行布局；因此继承自Ext.Container的子类都可以通过这两个属性进行布局，常用的子类有Ext.Viewport（对页面进行布局）、Ext.Panel、Ext.Window、Ext.form.FormPanel、Ext.form.Fieldset（对表单进行布局）
+
+而对于布局类，它们都有一个共同的子类Ext.layout.ContainerLaout；常用的布局类有BorderLayout、FormLayout、ColumnLayout、FitLayout、AbsoluteLayout等
+
+### FitLayout
+
+自适应布局，即内部元素会根据外部框架的大小变换而变换。使用如下：
+
+	var viewport = new Ext.Viewport({
+		layout: 'fit',
+		items: ...
+	});
+上述代码实现了页面内容的自适应布局。
+
+PS：使用FitLayout时要注意，items中只能放一个组件，即使放了几个也只有第一个组件有效，不管是使用什么进行布局的。
+
+### BorderLayout
+
+这是最常见的布局，即将页面分为东、南、西、北、中五个部分，除了中间的部分，其他部分都可以省略的布局方式。用法：
+
+	var viewport = new Ext.Viewport({
+		layout: 'border',
+		items: [
+			{region: 'center', html: 'center'},
+			{region: 'south', html: 'south', height:, split: true},
+			...
+		]
+	});
+上述代码中items字段是一个对象数组，每个对象用于定义布局的某一块，center部分是必须的，否则就会报错。
+
+东南西北这四个部分的大小可以进行设定，中间部分的大小是通过计算出来的，不能进行设置。大小通过height和width两个字段进行设定，其中**北和南只能设置高度**，而**东和西只能设置宽度**。为某个区域设置了参数split：true，则用户可通过拖动边框改变该区域的大小，但即使加上了此参数，北南只能上下拖动，东西只能左右拖动，而中间部分不支持拖动功能。此外还可以通过minSize和maxSize对用户的拖动范围进行限制。
+
+Ext还实现了子区域（即东南西北四个部分）的折叠与展开功能，设置如下：
+
+	{region: 'north', html: 'north', height: 300, title: 'north', collapsible: true }
+此处的title和collapsible必须同时设置。
+
+### Accordion
+
+可伸缩菜单式布局，使用时只需要将layout属性设置为accordion即可，需要注意的是items中的每一项都必须设定title值，其他的配置项如：titleCollapse（是否可通过点击标题栏折叠，否则就只能通过折叠按钮），animate（折叠时是否使用动画效果），activeOnTop（面板顺序是否根据展开情况进行改变，默认false）
+
+### CardLayout
+
+此类布局就相当于一堆重叠在一起的卡片，卡片的顺序可以变换但每一次都只能看到一张卡片，这种布局适用于向导说明，对应的layout为card。
+
+通过activeItem来控制当前显示的卡片，items中的是一个对象数组，一个对象表示一堆卡片，该对象中也有items字段用于定义每一张卡片。通过setActiveItem方法可控制下一个显示的卡片。
+
+### AnchorLayout & AbsoluteLayout
+
+AnchorLayout布局是一种灵活的布局方式，其为items中的每个组件的大小设置一个相对值anchor（可以只有一个值也可以是空格分开的两个值分别代表宽高），可根据整体进行调整，设置方式有三种：
+
+* 百分比（某子组件相对整体的百分比大小）
+* 设定右侧和底部的距离像素值
+* side（保证其父组件和子组件都没设置宽高或anchorSize），设置anchorSize，一个包含宽高的JSON值
+
+AbsoluteLayout是AnchorLayout的子类，需要对每个子组件设置绝对定位。
+
+### FormLayout
+
