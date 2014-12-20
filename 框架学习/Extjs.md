@@ -882,3 +882,157 @@ AbsoluteLayout是AnchorLayout的子类，需要对每个子组件设置绝对定
 
 ### FormLayout
 
+FormLayout也是AnchorLayout的子类，可以使用anchor设置高宽的比例，但其主要用于表单的布局，Ext.form.FormPanel使用它作为默认布局。其提供的布局参数：
+
+* hideLabels：是否隐藏控件的标签
+* itemCls：表单显示的样式
+* labelAlign：标签的对齐方式
+* labelPad：标签空白的像素值
+* labelWidth：标签宽度
+* clearCls：清除div渲染的css样式
+* fieldLabel：对应控件的标签内容
+* hideLabel：是否隐藏标签
+* itemCls：控件的css样式
+* labelSeparator：标签和控件之间的分隔，默认为：
+* labelStyle：标签的CSS样式
+
+### ColumnLayout
+
+此布局将整个容器进行竖直切分的布局方式，在每个子组件中设置columnWidth参数，这是一个0到1之间的小数，表示每个子组件在整体中所占的百分比，所有的columnWidth参数加起来应该小于等于1，小于1的时候会填不满。也可以单独给某一列赋值固定的宽度width，给剩下的组件添加columnWidth。
+
+### TableLayout
+
+使用layoutConfig参数定义要分为几列，在items中定义各个子面板，市容rowspan和colspan设置如何进行行和列的合并，其遵从从左到右、从上到下的规律。
+
+* rowspan：合并的行数
+* colspan：合并的列数
+* cellId：某个单元格的ID
+* cellCls：某个单元格的Css样式
+
+### BoxLayout
+
+* **HBox**
+
+	此布局方式用于在一行中排列多个组件，使用layout：hbox，每个子组件通过设置flex定义大小
+* **VBox**
+
+	此布局方式用于在一列中排列多个组件，layout：vbox，每个子组件通过设置flex定义大小
+
+### Ext.TabPanel
+
+这一组件用于创建选项卡式的布局，定义如下：
+
+	var tabs = new Ext.TabPanel({
+		renderTo: document.body,
+		height: 100
+	});
+上述代码定义了一个选项卡对象，但没有添加任何的选项卡，通过调用该对象的add方法即可添加选项卡：
+
+	tabs.add({
+		title: '',
+		id: Ext.id(),
+		html: '',
+		closable: true
+	});
+上述代码通过add方法向选项卡对象添加了一个选项卡面板，该面板的标题由title定义，id由Ext.id方法生成唯一id值，内容由html定义，而closable参数说明是否可以手动关闭选项卡，漠然为false。
+
+如果添加了多个选项卡，可以通过tabs对象的activate方法传入一个选项卡index索引，默认选中某个选项卡，选项卡的索引从0开始。
+
+还可以通过autoLoad为选项卡内容添加远程页面的内容，只需要传入一个URL值，同时不要html属性即可，注意autoLoad里面还要设置一个script为true才能执行该页面的js脚本：
+
+	tabs.add({
+		title: '',
+		autoLoad: {url: '', script: true}
+	});
+
+* 标签面板的滚动菜单
+
+	设置plugins：[scrollerMenu] ，同时引入TabScrollerMenu.js以及TabScrollerMenu.css文件即可使用，
+* 竖直分组的标签面板
+
+	引入GroupTabPanel.js、GroupTab.js、grouptabs.css三个文件，将外层xtype设置为grouptabpanel。
+
+### 其他布局知识
+
+* 超类Ext.Container公共配置
+
+	Ext.Container作为所有可布局组件的超类，提供了两个最主要的参数：layout和items，分别用于设置布局方式和子组件。与这两个参数相对应的还有layoutConfig，用来布局提供特定的配置参数，在实例化过程中，当前类会把自身的layoutConfig参数赋予layout对象并进行配置；activeItem，指定当前显示哪一个子组件。此外还有一个defaultType，当子组件没有设定xtype时，会使用上级组件的defaultType作为自身的xtype，其默认为panel。
+
+	在Ext中，xtype是一大特性，xtype: 'grid'与new Ext.grid.GridPanel的功效一样。
+* 超类Ext.layout.ContainerLaout
+
+	作为所有布局类的超类，Ext.layout.ContainerLaout只设置了所有布局类需要的一些配置，其本身不具备布局功能。
+
+* 当不指定布局类型时，布局组件会使用其特定的默认布局。
+* 嵌套实现复杂布局
+
+	Ext中的组件可以嵌套，对嵌套的组件可使用不同的布局类型，如此就可实现复杂的布局。
+
+## 第七课：弹出窗口
+
+### Ext.MessageBox
+
+对话框也是一种特殊的窗口，它能提供界面更加美观，功能更加多样的对话框。
+
+* Ext.MessageBox.alert()
+
+	这是Ext中的消息对话框，用法：
+
+		Ext.MessageBox.alert('标题', '内容', function(btn) {
+			//处理函数
+		});
+	处理函数会在用户点击关闭按钮（不论是确认按钮还是右上方的关闭按钮）之后执行。
+* Ext.MessageBox.confirm()
+
+	这是Ext中的判断对话框，用法：
+
+		Ext.MessageBox.confirm('标题', '内容', function(btn) {
+			//处理函数，此处的btn可表示用户点击的是yes还是no
+		});
+* Ext.MessageBox.prompt()
+
+	这是Ext中的输入对话框，用法：
+
+		Ext.MessageBox.prompt('标题', '内容', function(btn, text) {
+			//btn标识用户点击的是哪个按钮，text是用户输入的内容
+		});
+
+### 对话框配置
+
+* 多行输入框
+
+	将prompt对话框改装成可多行输入的对话框，通过Ext.Message.show方法，传入一个JSON配置对象，即可完成这个目标：
+
+		Ext.MessageBox.show({
+			title: '',
+			msg: '',
+			width: 300.
+			button: Ext.MessageBox.OKCANCEL,//表示使用预设的OK和CANCEL两个按钮
+			multilines: true,
+			fn: function (btn, text){
+				...
+			}
+		});
+	以上代码通过multilines创建了一个多行文本输入对话框。
+* 自定义对话框按钮
+
+	通过给button属性传入{ok: true, cancel: true}这样的对象可自定义按钮，Ext中的按钮有四种：ok、yes、no、cancel
+* 进度条
+
+	给Ext.MessageBox.show添加progress：true参数即可变为一个进度条对话框，也可以通过progress方法：
+
+		Ext.MessageBox.progress('标题', '内容');
+	然后调用Ext.MessageBox.updateProgress方法更新进度条，同时将show里面的参数closable设置为false以隐藏关闭按钮。
+
+	或者也可以使用Ext.MessageBox.wait
+* 动画效果
+
+	同时还可以为对话框设置弹出和关闭的动画效果，使用animEl参数指定一个HTML元素，然后对话框就会根据该元素播放弹出和关闭动画。
+
+此外使用Ext.MessageBox还可以简化为Ext.Msg，且实用它只能弹出一个对话框，而不能一次弹出多个。
+
+### Ext.Window
+
+* 创建窗口
+
+	
