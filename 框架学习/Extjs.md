@@ -1035,4 +1035,49 @@ FormLayout也是AnchorLayout的子类，可以使用anchor设置高宽的比例�
 
 * 创建窗口
 
-	
+		var win = new Ext.Window({
+			layout: 'fit',
+			width: 500,
+			height: 300,
+			closeAction: 'hide',
+			items: [{}],
+			buttons: [{
+				text: ''
+			}]
+		});
+		win.show();
+	以上代码创建了一个窗口，其中的items指定窗口内部的组件，buttons指定窗口底部的按钮，closeAction用于指定当用户点击关闭按钮后的执行动作，如果想要禁止关闭按钮，将closable属性设置为false即可，另外设置draggable为false可以禁止用户拖动窗口。最后调用win的show方法用于显示窗口
+* 窗口最大化与最小化
+
+	最大化按钮的设置属性为maximizable，将其设置为true即可。而最小化按钮的设置属性为minimizable。
+* 窗口隐藏与销毁
+
+	窗口设置的属性中有一个closeAction，其用于指定用户点击关闭按钮之后的动作，可选的有两种动作：销毁(close)和隐藏(hide)，默认情况下为close。如果为销毁则会将窗口有关的DOM全部删除，而如果是隐藏则仅仅是不可见，如果再次调用show方法还是可以看见的。与窗口关闭相关的属性还有closable，当设置为false时会隐藏窗口的关闭按钮，此时就需要调用窗口的close方法或hide方法才能进行销毁或隐藏。
+* 防止窗口超出浏览器边界
+
+	使用参数constrain和constrainHeader，分别用于限制窗口整体和窗口顶部不能超越浏览器边界。
+* 窗口按钮设置
+
+	按钮的对齐方式由buttonAlign指定；defaultButton参数可以指定默认选择的按钮的索引值，按钮索引从0开始。
+* 其他配置
+
+	resizable可指定是否可通过拖放改变窗口大小，然后结合modal:true参数可模拟窗口更改的过程。   
+	animateTarget可用于指定窗口弹出关闭时的动画。   
+	通过plain：true参数还可以对窗口内容进行部分美化。
+
+### 窗口分组
+
+默认情况下窗口都在Ext.WindowMgr组中，而窗口分组由Ext.WindowGroup类定义，该类的bringToFront、getActive、hideAll、sendToBack方法等可对分组中的窗口进行操作。
+
+### 向窗口中放入控件
+
+* 表格
+
+	此时表格不需要指定render或renderTo，而是直接将表格放入窗口的items中。
+* 表单
+
+	其他配置基本不变，只是将title去掉，将窗口布局设置为form
+* 复杂布局
+
+## 第八课：工具条和菜单
+
