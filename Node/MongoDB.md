@@ -95,3 +95,4 @@ MongoDB自带一个javascript shell，可以从命令行与MongoDB实例交互�
 ## 2.6 数据类型
 
 ### 2.6.1 基本数据类型
+

@@ -1317,3 +1317,312 @@ Ext.PagingToolbar继承自Ext.Toolbar，并提供一套标准的分页组件，�
 实际上，状态栏就是放在bbar上的工具条。可通过setStatus、showBusy、clearStatus等方法对状态信息进行操作。
 
 ## 第九课：数据存储与传输
+
+表格和ComboBox都是以Ext.data为媒介获取媒介，它包含异步加载、类型转换、分页等功能，它默认支持Array、JSON、XML等数据格式，可通过Memory、HTTP、ScriptTag等方式获得数据，还可扩展reader和proxy。
+
+### Ext.data.Connection
+
+Ext.data.Connection是对Ajax的封装，提供了配置实用Ajax的通用方式，也实现了浏览器之间的兼容以及后台的异步调用，其主要用于在Ext.data.HttpProxy和Ext.data.ScriptTag Proxy中执行与后台的交互，从指定URL获取数据，并将这些数据交给HttpProxy或ScriptTagProxy进行处理，使用方法如下：
+
+	var connection = new Ext.data.Connection({
+		autoAbort: false,
+		defaultHeaders: {
+			referer: 'http://localhost:8080'
+		},
+		disableCaching: false,
+		extraParams: {
+			name: 'name'
+		},
+		method: 'GET',
+		timeout: 300,
+		url: 'URL'
+		});
+使用Connection之前都要向上面的代码一样创建一个Ext.data.Connection对象实例，并进行一些配置：autoAbort表示链接是否会自动断开；defaultHeaders表示请求的默认首部信息；disableCaching表示请求是否会禁用缓存；extraParams表示请求的额外参数；method指定请求方法；timeout指定连接的超时时间；url指定请求地址。创建connection对象后再调用request方法发送请求，如下：
+
+	connection.request({
+		success: function(response) {},
+		failure: function() {}
+		});
+request方法可以指定两个回调函数：success和failure，分别在请求成功和失败的时候调用，此外request还有其他参数：
+
+* url：请求URL
+* params：Object/String/Function 请求传递的参数
+* method：请求方法
+* callback：Function 请求完成后的回调函数，无论成功或失败
+* scope：Object 回调函数的作用域
+* form：Object/String 绑定的表单
+* isUpload：Boolean 是否执行文件上传
+* headers：Object 请求首部
+* xmlData：Object XML文档对象
+* disableCaching：Boolean 是否禁用缓存，默认禁用
+
+### Ext.data.Record
+
+Ext.data.Record是一个设定了内部数据类型的对象，是Ext.data.Store的基本组成部分，如果把Ext.data.Store看作二维表，则Ext.data.Record就是行。Ext.data.Record的主要功能是保存数据、修改状态等，在使用之前都要使用create方法创建一个自定义的Record类型，如下：
+
+	var PersonRecord = new Ext.data.Record.create([
+		{name: 'name', type: 'string'},
+		{name: 'sex', type: 'int'}
+		]);
+然后用创建的自定义Record类型新建实例：
+
+	var boy = new PersonRecord({
+		name: 'Tom',
+		sex: 0
+		});
+获取此对象的属性：boy.data.name或者boy.data['name']或者boy.get('name')；其中的data是定义在Ext.data.Record中的一个公共属性，用于保存record对象的所有数据，是一个JSON对象可直接通过此属性获取数据。要修改属性则直接给这几个值赋值或调用set方法。
+
+Record的数据发生改变后可执行以下操作：
+
+* commit() 提交，设置dirty为false并删除modified中保留的原始数据
+* reject() 撤销，将data中已经修改了的属性值都恢复成modified中保留的原始数据，并设dirty为false，再删除modified中保存的原始数据
+* getChanges() 获得修改的部分
+
+也可通过isModified方法判断是否数据被修改了。
+
+### Ext.data.Store
+
+Ext.data.Store是Ext中用来进行数据交换和数据交互的中间件，在Ext.data.Store中有一个Ext.data.Record数组，所有数据都放在这些Ext.data.Record实例中。
+
+* 基本应用
+
+	使用先应先创建store实例，store最少需要两个组件的支持：proxy和reader；创建完毕后在通过store.load()实现数据转换，转换之后的数据就可供其它组件使用：
+
+		var store = new Ext.data.Store({
+			proxy: new Ext.data.MemoryProxy(data),
+			reader: new Ext.data.ArrayReader({}, PersonRecord)
+		});
+		store.load();
+* 数据排序
+
+	创建store实例时可通过设定sortInfo参数指定排序字段和排序方式：
+
+		sortInfo: {field: 'name', direction: 'DESC'}
+	另外用remoteSort还可实现后台排序功能。
+* 从store获取数据
+
+	可通过record在store中的位置使用方法getAt获取，如下：
+
+		store.getAt(0).get('name');
+	或者使用getCount方法获取所有数据记录，或通过each方法便利store，也可通过getRange获得连续多个值，也可通过id使用方法getById；此外Ext还提供find和findBy方法，以及query和queryBy
+* 更新store中的数据
+
+	add方法可用于向store添加record或record数组：
+
+		store.add(new PersonRecord({
+			name: 'other',
+			sex: 0
+		}));
+	但add方法每次都将record放到store的末尾，这可能会破坏原有的排序，此时可使用addSorted方法代替add；如果要根据自己定义的位置插入数据则使用insert方法。   
+	remove或removeAll方法用于删除record；而修改数据只能通过获取某个record再进行更改，Ext提供rejectChanges方法撤销所有修改，commitChanges提交数据修改，修改过后可通过getModifiedRecords获取修改过的record数组。
+* 加载及显示数据
+
+	store创建之后都要通过load方法加载数据，成功后才能对数据进行操作：
+
+		store.load({
+			params: {start: 0, limit: 20},//加载时的附加参数
+			callback: function(records, options, success) {},//加载完毕的回调函数，record表示获得的数据，options表示执行load时传入的参数，success表示是否加载成功
+			scope: store,//回调函数执行作用域
+			add: true//表示load得到的数据会添加到原来的store末尾，否则则先清除之前的数据再添加到store末尾
+		});
+	此外可通过baseParams传递固定参数，通过filter和filterBy对数据进行过滤。
+* 其他
+	* collect
+	* getTotalCount
+	* indexOf
+	* loadData
+	* sum
+
+### 常用Proxy
+
+* MemoryProxy
+
+	MemoryProxy只用于从JavaScript获取数据，可直接将JSON或XML格式的数据交给他处理：
+
+		var proxy = new Ext.data.MemoryProxy([
+			['id1', 'name1', 'desn1'],
+			['id2', 'name2', 'desn2']
+		]);
+* HttpProxy
+
+	HttpProxy使用http协议，通过ajax从后台获取数据，创建时要指定url。
+* ScriptTagProxy
+
+	用法和HttpProxy几乎相同，但支持跨域
+
+### 常用Reader
+
+* ArrayReader
+
+	 ArrayReader用于从二维数组里依次读取数据，然后生成对应的record数组。默认情况下按列顺序读取数组中的数据源，不过也可以使用mapping属性指定对应列号。
+* JsonReader
+
+	为JsonReader准备的data格式如下：
+
+		var data = {
+			id: 0,
+			totalProperty: 2,
+			successProperty: true,
+			root: [
+				{id: 'id1', name: 'name1', descn: 'descn1'},
+				{id: 'id2', name: 'name2', descn: 'descn2'}
+			]
+		};
+	与数组相JSON最大的优点就是支持分页，是同totalProperty参数可表示数据总量，而successProperty指定当请求是否执行成功进而开始数据加载，如果不想JsonReader处理数据就将其设置为false。
+* XmlReader
+
+	XmlReader的配置方式：
+
+		var reader = new　Ext.data.XmlReader({
+			totalRecords: 'totalRecords',//指定从后台获取的数据总数
+			success: 'success',
+			record: 'record',//需要显示的数据
+			id: "id"
+		}, ['id', 'name', 'descn']);
+
+### 高级Store
+
+不需要每次都对proxy、reader、store这三个对象进行配置，可选的有三种替代方案：
+
+* ArrayStore = Store + MemoryProxy + ArrayReader
+
+	ArrayStore是转为简化读取本地数组而设计的，使用时设置好MemoryProxy需要的data和ArrayReader需要的fields即可：
+
+		var ds = Ext.data.ArrayStore({
+			data: [...],
+			fields: ['id', 'name', 'descn']
+		});
+* JsonStore = Store + HttpProxy + JsonReader
+
+	JsonStore将JsonReader和HttpProxy结合在一起提供了一种从后台读取JSON信息的简便方法：
+
+		var ds = Ext.data.JsonStore({
+			url: 'URL',
+			root: 'root',
+			fields: []
+		});
+* Ext.data.GroupingStore对数据进行分组
+
+	创建Ext.data.GroupingStore传入分组字段，或创建后使用groupBy方法指定分组字段，都可实现分组。
+
+### Ext中的Ajax
+
+Ext.Ajax的基本用法：
+
+	Ext.Ajax.request({
+		url: 'URL',
+		success: function(response) {},
+		failure: function() {},
+		params: {}
+		});
+
+### scope的bind()
+
+Ajax中使用回调函数的问题，通过get方法获取远程的内容可能会出现问题。使用scope或bind可解决此类问题。
+
+* 为Ajax设置scope参数
+* 为success函数添加bind
+
+## 第十课：拖放
+
+在Ext中实现拖放只需要简单的一行代码：
+
+	new Ext.dd.DDProxy('block');//其中block是对应div的id
+
+### 拖放组件体系
+
+拖放组件可分为两大部分，一部分用于表示拖放的对象，有Ext.dd.DD、Ext.dd.DDProxy、Ext.dd.DragSource和Ext.dd.DragZone；另外一部分用于表示拖放的目的，有Ext.dd.DDTarget、Ext.dd.DropZone。实现一次拖放的时候拖放的对象和拖放的目的地是成对出现的，如下：
+
+	//proxy表示可拖动对象
+	var proxy = new Ext.dd.DragSource('proxy', {group: 'dd'});
+	//target表示拖动的目的地
+	var target = new Ext.dd.DDTarget('target', {group: 'dd'});
+	//注意这两个对象的分组group是一样的
+
+### 拖放事件
+
+在Ext.dd.DragDrop中定义的与事件相关的函数有：startDrag、onDrag、onDragDrop、endDrag、onDragEnter、onDragOut、onDragOver、onInvalidDrop、onMouseDown、onMouseUp，在实际运用中需要重写时间函数从而监听和处理拖放功能。而这些事件又可分为三大类：
+
+* 描述拖放主要过程类：
+	* startDrag(int x, int y) 开始拖放，参数为坐标值
+	* onDrag(Event e) 正在拖放，参数是mousemove鼠标移动事件
+	* onDragDrop(Event e, String|DragDrop[] id) 正在放下，第一个参数是mouseup事件，第二个参数表示drop目标位置
+	* endDrag(Event e) 拖放结束，参数是mouseup事件
+* 细化拖放过程类：
+	* onDragEnter(Event e, String|DragDrop[] id) 进入drop区域，第一个参数是mousemove事件，第二个参数表示drop目标
+	* onDragOut(Event e, String|DragDrop[] id) 离开drop区域，同上
+	* onDragOver(Event e, String|DragDrop[] id) 在drop区域拖放，同上
+	* onInvalidDrop(Event e) 不能drop，不再drop区域触发，参数是mousemove事件
+* 对原始鼠标事件进行提示
+	* onMouseDown
+	* onMouseUp
+
+### 高级拖放
+
+* 基础
+
+	示例如下：
+
+		dd1 = new Ext.dd.DD('dd-demo-1');//创建了一个拖动对象
+		对应的html：< div id='dd-demo-1'></div>
+* 控制柄
+
+	设置控制柄的方法：
+
+		dd1.setHandleElId('dd-handle-1');//此处的dd-handle-1是对应控制柄div的id
+	控制柄也是一个div，但只有当鼠标点中控制柄才能将物体拖动
+* 总在最上面
+
+	为便于拖放，总是将正在拖放的div显示在最上层，只要新建一个Ext.ux.DDOnTop对象即可，该对象继承自Ext.dd.DD并重写了StartDrag和endDrag方法，用于将拖放时的div显示在最上层。创建拖放对象时用Ext.ux.DDOnTop替代Ext.dd.DD
+* 代理
+
+	代理即拖放时原div不动，而使用一个名为Proxy的拖放，使用代理的方法是将原先用于创建拖动对象的Ext.dd.DD换成Ext.dd.DDProxy，这样会出现只有外框的空白代理，如果要自己定义代理，则如下：
+
+		dd1 = new Ext.dd.DDProxy("dd-demo-1", "default", {
+			dragElId: "dd-demo-1-proxy",
+			resizeFrame: false
+		});
+	上述参数：第一个表示拖放的对象，第二个表示组，第三个是附加参数，其中resizeFrame告诉Ext不用是proxy与原div一样大
+* 分组
+
+	
+* 网格拖放
+
+
+* 圆形拖放
+
+
+* 拖放范围
+
+
+## 第十一课：Ext实用工具
+
+###常用函数
+
+1. onReady函数
+
+	此方法可实现页面的预加载，该方法有三个参数：第一个参数是页面加载完毕时的调用函数，是必需的；第二个参数表示函数的作用域；第三个参数表示执行的其他操作，如延时。在一个页面中可以通过onReady注册多个处理函数，这些函数会被放到事件队列中，在HTML加载完毕时依次执行。另外该方法的第三个参数是与处理函数执行相关的特殊属性，如：delay、single、buffer等等
+2. get开头的函数
+
+	* get函数，用来获取一个Ext元素，及Ext.Element对象，参数只有一个，可以是id、element等等
+	* getCmp函数，用于获取一个Ext组件，及一个已在页面中被初始化了的Component或其子类的对象，通过制定id获得Ext.Component，此函数是Ext.ComponentMgr.get的缩写
+	* getDom函数，用于获取文档中的DOM节点，只需要传入id或节点对象或元素即可，Ext.getDom可看作Ext.get().dom的等同形式
+	* getBody函数，用于获取文档中与document.body这个DOM节点对应的Ext元素
+	* getDoc函数，用户获取当前HTML文档对象的对应Ext元素
+3. encode与decode函数
+
+	这两个函数用于对JSON数据进行编码和解码
+4. extend函数
+
+	Ext.extend函数提供直接访问父类构造函的途径，通过SubClass.superclass.constructor.call(this)即可直接调用父类的构造函数，此函数的第一个参数是this，以确保父类的构造函数在子类的作用域工作。
+5. apply函数和applyIf函数
+
+	Ext.apply函数的作用将一个对象中的所有属性都复制到另一个对象。而Ext.applyIf与之作用类似，区别在于如果某个属性在目标对象中已经存在，则Ext.applyIf不会将其覆盖。
+6. namespace函数
+
+	Ext.namespace函数的作用是把传入的参数转换成对象，使用该方法的主要目的是区分名称相同的类
+7. each函数
+
+	Ext.each方法用于对数组中每一个元素进行同一种操作。
+
+### 动态生成HTML
