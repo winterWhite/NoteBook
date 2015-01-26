@@ -446,19 +446,19 @@ function ifFunction(fn) {
 
 //闭包与函数的异步调用方式（回调函数、计时器）
 
-$("#testButton").click(function() {
-	var elem$ = $("#div");
+// $("#testButton").click(function() {
+// 	var elem$ = $("#div");
 
-	elem$.html("loading...");
+// 	elem$.html("loading...");
 
-	jQuery.ajax({
-		url: "test.html",
-		success: function(html) {
-			assert(elem$, "We can see elem$, via the closure for this callback");
-			elem$.html(html);
-		}
-	});
-});
+// 	jQuery.ajax({
+// 		url: "test.html",
+// 		success: function(html) {
+// 			assert(elem$, "We can see elem$, via the closure for this callback");
+// 			elem$.html(html);
+// 		}
+// 	});
+// });
 
 // var elem = document.getElementById("div");
 // var tick = 0;
@@ -478,14 +478,227 @@ $("#testButton").click(function() {
 
 //闭包与函数上下文
 
-var elem = document.getElementById("testButton");
+// var elem = document.getElementById("testButton");
 
-var button = {
-	clicked: false,
-	click: function() {
-		this.clicked = true;
-		assert(button.clicked, "The Button is clicked");
-	}
-};
+// function bind(context, name) {
+// 	return function() {
+// 		return context[name].apply(context, arguments);
+// 	};
+// }
 
-elem.addEventListener("click", button.click, false);
+// var button = {
+// 	clicked: false,
+// 	click: function() {
+// 		this.clicked = true;
+// 		assert(button.clicked, "The Button is clicked");
+// 		console.log(this);
+// 	}
+// };
+
+// elem.addEventListener("click", bind(button, "click"), false);
+
+// Function.prototype.bind = function() {
+// 	var fn = this, args = Array.prototype.slice.call(arguments), object = args.shift();
+
+// 	return function() {
+// 		return fn.apply(object, args.concat(Array.prototype.slice.call(arguments)));
+// 	};
+// };
+
+// var myObject = {};
+
+// function MyFunction() {
+// 	return this == myObject;
+// }
+
+// assert(!MyFunction(), "Context is not set yet");
+// var aFunction = MyFunction.bind(myObject);
+
+// assert(aFunction(), "Context is set properly");
+
+//闭包与函数参数预填充
+
+// Function.prototype.curry = function() {
+// 	var fn = this, args = Array.prototype.slice.call(arguments);
+
+// 	return function() {
+// 		return fn.apply(this, args.concat(Array.prototype.slice.call(arguments)));
+// 	};
+// };
+
+// Function.prototype.partial = function() {
+// 	var fn = this, args = Array.prototype.slice.call(arguments);
+
+// 	return function() {
+// 		var arg = 0;
+// 		for (var i = 0; i < args.length && arg < arguments.length; i++) {
+// 			if (args[i] === undefined) {
+// 				args[i] = arguments[arg++];
+// 			}
+// 		}
+// 		return fn.apply(this, args);
+// 	};
+// };
+
+// String.prototype.csv = String.prototype.split.partial(/, \s*/);
+
+// var results = ("Mugan, Jin, Fuu").csv();
+
+// assert(results[0] == "Mugan" && results[1] == "Jin" && results[2] == "Fuu", "The text values were splited");
+
+//闭包与记忆缓存
+
+// Function.prototype.memorized = function(key) {
+// 	this._values = this._values || {};
+
+// 	return this._values[key] !== undefined ? this._values[key] : this._values[key] = this.apply(this, arguments);
+// };
+
+// function isPrime(num) {
+// 	var prime = num != 1;
+// 	for (var i = 2; i < num; i++) {
+// 		if (num % i == 0) {
+// 			prime = false;
+// 			break;
+// 		}
+// 	}
+// 	return prime;
+// }
+
+// assert(isPrime.memorized(5), "The Function is worked");
+// assert(isPrime._values[5], "the answers is cached");
+
+// Function.prototype.memorized = function(key) {
+// 	this._values = this._values || {};
+// 	xyz = this._values;
+
+// 	return this._values[key] !== undefined ? this._values[key] : this._values[key] = this.apply(this, arguments); 
+// };
+
+// Function.prototype.memorize = function() {
+// 	var fn = this;
+// 	return function() {
+// 		return fn.memorized.apply(fn, arguments);
+// 	};
+// };
+
+// var isPrime = (function(num) {
+// 	var prime = num != 1;
+// 	for (var i = 2; i < num; i++) {
+// 		if (num % i == 0) {
+// 			prime = false;
+// 			break;
+// 		}
+// 	}
+// 	return prime;
+// }).memorize();
+
+// assert(isPrime.memorized(5), "The Function is worked");
+//  assert(isPrime._values[5], "the answers is cached");
+
+//立即执行的函数语法(function(){})();
+
+// (function(v) {
+// 	Object.extend(v, {
+// 		href: v._getAttr,
+// 		src: v._getAttr,
+// 		type: v._getAttr,
+// 		action: v._getAttrNode,
+// 		disabled: v._flag,
+// 		checked: v._flag,
+// 		readonly: v._flag,
+// 		multiple: v._flag,
+// 		onload: v._getEv,
+// 		onunload: v._getEv,
+// 		onclick: v._getEv,
+// 		...
+// 	});
+// })(Element._attributeTranslations.read.values);
+
+//使用立即执行的函数解决闭包的动态改变变量的问题
+
+// var oDiv = document.getElementsByClassName("div");
+
+// for (var i = 0; i < oDiv.length; i++) (function(i) {
+// 	oDiv[i].addEventListener("click", function() {
+// 		alert("div" + i + "was clicked");
+// 	}, false);
+// })(i);
+
+//函数原型
+
+// function Ninja() {}
+
+// Ninja.prototype.swingSword = function() {
+// 	return true;
+// };
+// var ninja1 = Ninja();
+// assert(ninja1 === undefined, "No instance of Ninja created");
+// var ninja2 = new Ninja();
+// assert(ninja2 && ninja2.swingSword(), "Instance exists and method is callcable");
+
+// function Ninja() {
+// 	this.swung = false;
+// 	this.swingSword = function() {
+// 		return !this.swung;
+// 	};
+// }
+
+// Ninja.prototype.swingSword = function() {
+// 	return this.swung;
+// };
+
+// var ninja = new Ninja();
+// assert(ninja.swingSword(), "Called the instance method, not the prototype method");
+
+// function Ninja() {
+// 	this.swung = true;
+// }
+
+// var ninja = new Ninja();
+
+// Ninja.prototype.swingSword = function() {
+// 	return this.swung;
+// };
+
+// assert(ninja.swingSword(), "Method exists, even out of order");
+
+// function Ninja() {
+// 	this.swung = true;
+// 	this.swingSword = function() {
+// 		return !this.swung;
+// 	};
+// }
+
+// var ninja = new Ninja();
+// Ninja.prototype.swingSword = function() {
+// 	return this.swung;
+// };
+
+// assert(!ninja.swingSword(), "Called the instance method, not the prototype method");
+
+//实例类型检测
+
+// function Ninja() {}
+
+// var ninja = new Ninja();
+
+// assert(typeof ninja == "object", "the type of ninja is object");
+// assert(ninja instanceof Ninja, "instanceof identifies the constructor");
+// assert(ninja.constructor == Ninja, "the ninja was created by Ninja");
+
+//原型链
+
+// function Person() {}
+
+// Person.prototype.dance = function() {};
+
+// function Ninja() {}
+
+// Ninja.prototype = new Person();
+
+// var ninja = new Ninja();
+// assert(ninja instanceof Ninja, "ninja receives from the Ninja prototype");
+// assert(ninja instanceof Person, "...and Person prototype");
+// assert(ninja instanceof Object, "...and Object prototype");
+
