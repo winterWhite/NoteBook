@@ -216,3 +216,19 @@ session_start()启动会话
 
 $_SESSION 获取session
 
+## PHP Filter
+
+PHP用于验证和过滤来自非安全来源的数据，可用过滤器方法有：
+
+* filter_var() - 通过一个指定的过滤器来过滤单一的变量
+* filter_var_array() - 通过相同的或不同的过滤器来过滤多个变量
+* filter_input - 获取一个输入变量，并对它进行过滤
+* filter_input_array - 获取多个输入变量，并通过相同的或不同的过滤器对它们进行过滤
+
+上面的函数用到两个参数：1.要校验的变量 2.过滤器；PHP可用的过滤器方法和过滤器见：
+[http://www.w3school.com.cn/php/php_ref_filter.asp]{http://www.w3school.com.cn/php/php_ref_filter.asp}
+
+使用方式：
+
+	filter_var($int, FILTER_VALIDATE_INT);//此处用到的FILTER_VALIDATE_INT就是过滤器的一种，用来校验整数
+	
